@@ -4,8 +4,10 @@ from scipy.integrate import quad
 import numpy as np
 from lenstronomy.LensModel.Profiles.sersic import Sersic
 from lenstronomy.Util import param_util
+from lenstronomy.LensModel.Profiles.base_profile import LensProfileBase
 
-class SersicEllipseKappa(object):
+
+class SersicEllipseKappa(LensProfileBase):
     """
     this class contains the function and the derivatives of an elliptical sersic profile
     with the ellipticity introduced in the convergence (not the potential).
@@ -21,6 +23,7 @@ class SersicEllipseKappa(object):
     def __init__(self):
 
         self._sersic = Sersic()
+        super(SersicEllipseKappa, self).__init__()
 
     def function(self, x, y, n_sersic, R_sersic, k_eff, e1, e2, center_x=0, center_y=0):
 
@@ -57,7 +60,7 @@ class SersicEllipseKappa(object):
 
     def derivatives(self, x, y, n_sersic, R_sersic, k_eff, e1, e2, center_x=0, center_y = 0):
 
-        phi_G, gam = param_util.ellipticity2phi_gamma(e1, e2)
+        phi_G, gam = param_util.shear_cartesian2polar(e1, e2)
         q = max(1-gam, 0.00001)
 
         x, y = self._coord_rotate(x, y, phi_G, center_x, center_y)

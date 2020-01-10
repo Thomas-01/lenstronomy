@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-import lenstronomy.Util.mask as mask_util
+import lenstronomy.Util.mask_util as mask_util
 
 
 def half_light_radius(lens_light, x_grid, y_grid, center_x=0, center_y=0):
@@ -57,8 +57,8 @@ def azimuthalAverage(image, center=None):
 
     image - The 2D image
     center - The [x,y] pixel coordinates used as the center. The default is None, which then uses the center of the
-    image (including fracitonal pixels).
-
+    image (including fractional pixels).
+    :return: I(r) (averaged), r of bin edges
     """
     # Calculate the indices from the image
     y, x = np.indices(image.shape)
@@ -84,10 +84,9 @@ def azimuthalAverage(image, center=None):
     # Cumulative sum to figure out sums for each radius bin
     csim = np.cumsum(i_sorted, dtype=float)
     tbin = csim[rind[1:]] - csim[rind[:-1]]
-
+    r_bin = np.linspace(start=1, stop=len(tbin) + 1 - 0.5, num=len(tbin))
     radial_prof = tbin / nr
-
-    return radial_prof
+    return radial_prof, r_bin
 
 
 def moments(I_xy_input, x, y):
@@ -126,3 +125,35 @@ def ellipticities(I_xy, x, y):
     e1 = (Q_xx - Q_yy) / norm
     e2 = 2 * Q_xy / norm
     return e1 / (1+bkg), e2 / (1+bkg)
+
+
+def bic_model(logL, num_data, num_param):
+    """
+    Bayesian information criteria
+
+    :param logL: log likelihood value
+    :param num_data: numbers of data
+    :param num_param: numbers of model parameters
+    :return: BIC value
+    """
+    bic = -2 * logL + (np.log(num_data) * num_param)
+    return bic
+
+
+def profile_center(kwargs_list, center_x=None, center_y=None):
+    """
+    utility routine that results in the centroid estimate for the profile estimates
+
+    :param kwargs_list: light parameter keyword argument list (can be light or mass)
+    :param center_x: None or center
+    :param center_y: None or center
+    :return: center_x, center_y
+    """
+    if center_x is None or center_y is None:
+        if 'center_x' in kwargs_list[0]:
+            center_x = kwargs_list[0]['center_x']
+            center_y = kwargs_list[0]['center_y']
+        else:
+            raise ValueError('The center has to be provided as a function argument or the first profile in the list'
+                             ' must come with a center.')
+    return center_x, center_y

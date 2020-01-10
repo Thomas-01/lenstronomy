@@ -241,6 +241,23 @@ def test_selectBest():
     assert len(array_select) == len(array)
 
 
+def test_select_best():
+    array = np.array([4, 3, 6, 1, 3])
+    select = np.array([2, 4, 7, 3, 3])
+    numSelect = 4
+    array_select = util.select_best(array, select, numSelect, highest=True)
+
+    assert array_select[0] == 6
+    assert array_select[3] == 1
+
+    array_select = util.select_best(array, select, numSelect, highest=False)
+    assert array_select[0] == 3
+    assert array_select[3] == 4
+
+    array_select = util.select_best(array, select, num_select=10, highest=False)
+    assert len(array_select) == len(array)
+
+
 def test_compare_distance():
     x_mapped = np.array([4,3,6,1,3])
     y_mapped = np.array([2,4,7,3,3])
@@ -296,6 +313,33 @@ def test_points_on_circle():
     assert dec[0] == 0
 
 
+def test_convert_bool_list():
+    bool_list = util.convert_bool_list(n=10, k=None)
+    assert len(bool_list) == 10
+    assert bool_list[0] == True
+
+    bool_list = util.convert_bool_list(n=10, k=3)
+    assert len(bool_list) == 10
+    assert bool_list[3] is True
+    assert bool_list[2] is False
+
+    bool_list = util.convert_bool_list(n=10, k=[3, 7])
+    assert len(bool_list) == 10
+    assert bool_list[3] is True
+    assert bool_list[7] is True
+    assert bool_list[2] is False
+
+    bool_list = util.convert_bool_list(n=3, k=[False, False, True])
+    assert len(bool_list) == 3
+    assert bool_list[0] is False
+    assert bool_list[1] is False
+    assert bool_list[2] is True
+
+    bool_list = util.convert_bool_list(n=3, k=[])
+    assert len(bool_list) == 3
+    assert bool_list[0] is False
+
+
 class TestRaise(unittest.TestCase):
 
     def test_raise(self):
@@ -307,6 +351,14 @@ class TestRaise(unittest.TestCase):
             util.get_axes(x, y)
         with self.assertRaises(ValueError):
             util.selectBest(array=np.ones(6), criteria=np.ones(5), numSelect=1, highest=True)
+        with self.assertRaises(ValueError):
+            util.select_best(array=np.ones(6), criteria=np.ones(5), num_select=1, highest=True)
+        with self.assertRaises(ValueError):
+            util.convert_bool_list(n=2, k=[3, 7])
+        with self.assertRaises(ValueError):
+            util.convert_bool_list(n=3, k=[True, True])
+        with self.assertRaises(ValueError):
+            util.convert_bool_list(n=2, k=[0.1, True])
 
 
 if __name__ == '__main__':

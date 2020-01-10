@@ -23,9 +23,9 @@ lenstronomy - gravitational lensing software package
 
 ``lenstronomy`` is a multi-purpose package to model strong gravitational lenses. The software package is presented in
 `Birrer & Amara 2018 <https://arxiv.org/abs/1803.09746v1>`_ and is based on `Birrer et al 2015 <http://adsabs.harvard.edu/abs/2015ApJ...813..102B>`_.
-``lenstronomy`` finds application in e.g. `Birrer et al 2016 <http://adsabs.harvard.edu/abs/2016JCAP...08..020B>`_ and
-`Birrer et al 2018 <http://adsabs.harvard.edu/abs/2018arXiv180901274B>`_ for time-delay cosmography and measuring
-the expansion rate of the universe and `Birrer et al 2017 <http://adsabs.harvard.edu/abs/2017JCAP...05..037B>`_ for
+``lenstronomy`` finds application in e.g. `Birrer et al 2016 <http://adsabs.harvard.edu/abs/2016JCAP...08..020B>`_,
+`Birrer et al 2018 <http://adsabs.harvard.edu/abs/2018arXiv180901274B>`_ and `Shajib et al 2019 <https://arxiv.org/abs/1910.06306>`_ for time-delay cosmography and measuring
+the expansion rate of the universe and `Birrer et al 2017 <http://adsabs.harvard.edu/abs/2017JCAP...05..037B>`_ and `Gilman et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019arXiv190806983G/abstract>`_ for
 quantifying lensing substructure to infer dark matter properties.
 
 
@@ -48,36 +48,32 @@ Requirements
 To run lens models with elliptical mass distributions, the fastell4py package, originally from Barkana (fastell),
 is also required and can be cloned from: `https://github.com/sibirrer/fastell4py <https://github.com/sibirrer/fastell4py>`_ (needs a fortran compiler)
 
-Additional python libraries:
+.. code-block:: bash
 
-* ``CosmoHammer`` (through PyPi)
-* ``astropy``
-* ``dynesty``
-* ``pymultinest``
-* ``pypolychord``
-* ``nestcheck``
-* standard python libraries (``numpy``, ``scipy``)
+    $ sudo apt-get install gfortran
+    $ git clone https://github.com/sibirrer/fastell4py.git <desired location>
+    $ cd <desired location>
+    $ python setup.py install --user
+
+
+Additional python libraries are e.g. : ``numpy``, ``scipy``, ``matplotlib`` ``astropy``, ``dynesty``, ``pymultinest``, ``pypolychord``, ``nestcheck``, ``CosmoHammer``
 
 
 
 Modelling Features
 ------------------
 
-* a variety of lens models to use in arbitrary superposition
-* lens equation solver
-* multi-plane ray-tracing
-* Extended source reconstruction with basis sets (shapelets) and analytic light profiles
-* Point sources
+* a variety of analytic lens model profiles
+* various lensing computation tools (lens equation solver, ray-tracing etc)
+* integrated support for multi-lens plane and multi-source plane modelling
+* API to conveniently simulate mock lenses
+* Extended source reconstruction with basis sets (shapelets)
 * numerical options for sub-grid ray-tracing and sub-pixel convolution
-* non-linear line-of-sight description
-* iterative point spread function reconstruction
-* linear and non-linear optimization modules
-* Pre-defined plotting and illustration routines
 * Particle swarm optimization for parameter fitting
-* MCMC (emcee from CosmoHammer) for parameter inferences
-* Nested Sampling (MultiNest, DyPolyChord, or Dynesty) for evidence computation and parameter inferences
-* Kinematic modelling
+* MCMC (emcee) and nested sampling (MultiNest, DyPolyChord, or Dynesty)
+* Kinematic modelling (Jeans anisotropy models) of lens deflector galaxy
 * Cosmographic inference tools
+* ...and much more
 
 
 
@@ -92,9 +88,11 @@ user to directly access a lot of tools and each module can also be used as stand
 Example notebooks
 -----------------
 
-We have made an extension module available at `http://github.com/sibirrer/lenstronomy_extensions <https://github.com/sibirrer/lenstronomy_extensions>`_.
-You can find simple examle notebooks for various cases.
+We have made an extension module available at `https://github.com/sibirrer/lenstronomy_extensions <https://github.com/sibirrer/lenstronomy_extensions>`_.
+You can find simple examle notebooks for various cases. The latest versions of the notebooks should be compatible with the recent pip version of lenstronomy.
 
+* `Units, coordiante system and parameter definitions in lenstronomy <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/units_coordinates_parameters.ipynb>`_
+* `FITS handling and extracting needed information from the data prior to modeling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/units_coordinates_parameters.ipynb>`_
 * `Quadrupoly lensed quasar modelling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/quad_model.ipynb>`_
 * `Double lensed quasar modelling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/double_model.ipynb>`_
 * `Time-delay cosmography <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/time-delay%20cosmography.ipynb>`_
@@ -115,6 +113,7 @@ Mailing list
 
 You can join the **lenstronomy** mailing list by signing up on the
 `google groups page <https://groups.google.com/forum/#!forum/lenstronomy>`_.
+
 
 The email list is meant to provide a communication platform between users and developers. You can ask questions,
 and suggest new features. New releases will be announced via this mailing list.

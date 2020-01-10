@@ -7,9 +7,10 @@ import scipy.special
 import math
 
 import lenstronomy.Util.param_util as param_util
+from lenstronomy.LensModel.Profiles.base_profile import LensProfileBase
 
 
-class PolarShapelets(object):
+class PolarShapelets(LensProfileBase):
     """
     this class contains the function and the derivatives of the Singular Isothermal Sphere
     """
@@ -19,14 +20,15 @@ class PolarShapelets(object):
 
     def __init__(self):
         n = 10
-        self.poly = [[[] for i in range(n)] for i in range(n)]
-        for i in range(0,n):
-            for j in range(0,n):
+        self.poly = [[[] for i in range(n)] for j in range(n)]
+        for i in range(0, n):
+            for j in range(0, n):
                 self.poly[i][j] = scipy.special.genlaguerre(i, j)
+        super(PolarShapelets, self).__init__()
 
     def function(self, x, y, coeffs, beta, center_x=0, center_y=0):
         shapelets = self._createShapelet(coeffs)
-        r, phi = param_util.cart2polar(x, y, center=np.array([center_x, center_y]))
+        r, phi = param_util.cart2polar(x, y, center_x=center_x, center_y=center_y)
         f_ = self._shapeletOutput(r, phi, beta, shapelets)
         return f_
 
@@ -35,7 +37,7 @@ class PolarShapelets(object):
         returns df/dx and df/dy of the function
         """
         shapelets = self._createShapelet(coeffs)
-        r, phi = param_util.cart2polar(x, y, center=np.array([center_x, center_y]))
+        r, phi = param_util.cart2polar(x, y, center_x=center_x, center_y=center_y)
         alpha1_shapelets, alpha2_shapelets = self._alphaShapelets(shapelets, beta)
         f_x = self._shapeletOutput(r, phi, beta, alpha1_shapelets)
         f_y = self._shapeletOutput(r, phi, beta, alpha2_shapelets)
@@ -46,7 +48,7 @@ class PolarShapelets(object):
         returns Hessian matrix of function d^2f/dx^2, d^f/dy^2, d^2/dxdy
         """
         shapelets = self._createShapelet(coeffs)
-        r, phi = param_util.cart2polar(x, y, center=np.array([center_x, center_y]))
+        r, phi = param_util.cart2polar(x, y, center_x=center_x, center_y=center_y)
         kappa_shapelets=self._kappaShapelets(shapelets, beta)
         gamma1_shapelets, gamma2_shapelets=self._gammaShapelets(shapelets, beta)
         kappa_value=self._shapeletOutput(r, phi, beta, kappa_shapelets)
@@ -113,7 +115,7 @@ class PolarShapelets(object):
                 values += value
         return values.real
 
-    def _chi_lr(self,r, phi, nl,nr,beta):
+    def _chi_lr(self, r, phi, nl, nr, beta):
         """
         computes the generalized polar basis function in the convention of Massey&Refregier eqn 8
 
@@ -161,7 +163,6 @@ class PolarShapelets(object):
                 if nr>0:
                     output[nl+1][nr-1]+=a_lr*np.sqrt((nl+1)*nr)/2
         return output/beta**2
-
 
     def _alphaShapelets(self,shapelets, beta):
         """
@@ -221,7 +222,8 @@ class PolarShapelets(object):
                     output_y[nl][nr-2] += a_lr*np.sqrt((nr)*(nr-1))*1j/4
         return output_x/beta**2, output_y/beta**2  #attention complex numbers!!!!
 
-    def _get_num_l(self, n_coeffs):
+    @staticmethod
+    def _get_num_l(n_coeffs):
         """
 
         :param n_coeffs: number of coeffs

@@ -1,10 +1,10 @@
 import numpy as np
 from lenstronomy.Cosmo.background import Background
-from lenstronomy.LensModel.single_plane import SinglePlane
+from lenstronomy.LensModel.profile_list_base import ProfileListBase
 import lenstronomy.Util.constants as const
 
 
-class MultiPlaneBase(object):
+class MultiPlaneBase(ProfileListBase):
 
     """
     Multi-plane lensing class
@@ -36,9 +36,9 @@ class MultiPlaneBase(object):
         if not len(lens_model_list) == len(lens_redshift_list):
             raise ValueError("The length of lens_model_list does not correspond to redshift_list")
 
-        self._lens_model_list = lens_model_list
         self._lens_redshift_list = lens_redshift_list
-        self._lens_model = SinglePlane(lens_model_list, numerical_alpha_class=numerical_alpha_class)
+        super(MultiPlaneBase, self).__init__(lens_model_list, numerical_alpha_class=numerical_alpha_class,
+                                       lens_redshift_list=lens_redshift_list, z_source_convention=z_source_convention)
 
         if len(lens_model_list) < 1:
             self._sorted_redshift_index = []
@@ -76,12 +76,12 @@ class MultiPlaneBase(object):
         :param z_stop: redshift where output is computed
         :param kwargs_lens: lens model keyword argument list
         :param include_z_start: bool, if True, includes the computation of the deflection angle at the same redshift as
-        the start of the ray-tracing. ATTENTION: deflection angles at the same redshift as z_stop will be computed always!
-        This can lead to duplications in the computation of deflection angles.
+         the start of the ray-tracing. ATTENTION: deflection angles at the same redshift as z_stop will be computed always!
+         This can lead to duplications in the computation of deflection angles.
         :param T_ij_start: transverse angular distance between the starting redshift to the first lens plane to follow.
-        If not set, will compute the distance each time this function gets executed.
+         If not set, will compute the distance each time this function gets executed.
         :param T_ij_end: transverse angular distance between the last lens plane being computed and z_end.
-        If not set, will compute the distance each time this function gets executed.
+         If not set, will compute the distance each time this function gets executed.
         :return: co-moving position and angles at redshift z_stop
         """
         x = np.array(x, dtype=float)
@@ -215,22 +215,25 @@ class MultiPlaneBase(object):
 
         return pos_x, pos_y, redshifts, Tz_list
 
-    def arrival_time(self, theta_x, theta_y, kwargs_lens, z_stop, T_z_stop=None, T_ij_end=None):
+    def geo_shapiro_delay(self, theta_x, theta_y, kwargs_lens, z_stop, T_z_stop=None, T_ij_end=None):
         """
-        light travel time relative to a straight path through the coordinate (0,0)
+        geometric and Shapiro (gravitational) light travel time relative to a straight path through the coordinate (0,0)
         Negative sign means earlier arrival time
 
         :param theta_x: angle in x-direction on the image
         :param theta_y: angle in y-direction on the image
-        :param kwargs_lens:
-        :return: travel time in unit of days
+        :param kwargs_lens: lens model keyword argument list
+        :param z_stop: redshift of the source to stop the backwards ray-tracing
+        :param T_z_stop: optional, transversal angular distance from z=0 to z_stop
+        :param T_ij_end: optional, transversal angular distance between the last lensing plane and the source plane
+        :return: dt_geo, dt_shapiro, [days]
         """
-        dt_grav = np.zeros_like(theta_x)
-        dt_geo = np.zeros_like(theta_x)
-        x = np.zeros_like(theta_x)
-        y = np.zeros_like(theta_y)
-        alpha_x = np.array(theta_x)
-        alpha_y = np.array(theta_y)
+        dt_grav = np.zeros_like(theta_x, dtype=float)
+        dt_geo = np.zeros_like(theta_x, dtype=float)
+        x = np.zeros_like(theta_x, dtype=float)
+        y = np.zeros_like(theta_y, dtype=float)
+        alpha_x = np.array(theta_x, dtype=float)
+        alpha_y = np.array(theta_y, dtype=float)
         i = 0
         z_lens_last = 0
         for i, index in enumerate(self._sorted_redshift_index):
@@ -242,7 +245,7 @@ class MultiPlaneBase(object):
                     pass
                 elif T_ij > 0:
                     T_j = self._T_z_list[i]
-                    T_i = self._T_z_list[i-1]
+                    T_i = self._T_z_list[i - 1]
                     beta_i_x, beta_i_y = x / T_i, y / T_i
                     beta_j_x, beta_j_y = x_new / T_j, y_new / T_j
                     dt_geo_new = self._geometrical_delay(beta_i_x, beta_i_y, beta_j_x, beta_j_y, T_i, T_j, T_ij)
@@ -265,7 +268,7 @@ class MultiPlaneBase(object):
         beta_j_x, beta_j_y = x_new / T_j, y_new / T_j
         dt_geo_new = self._geometrical_delay(beta_i_x, beta_i_y, beta_j_x, beta_j_y, T_i, T_j, T_ij)
         dt_geo += dt_geo_new
-        return dt_grav + dt_geo
+        return dt_geo, dt_grav
 
     @staticmethod
     def _index_ordering(redshift_list):
@@ -293,18 +296,19 @@ class MultiPlaneBase(object):
         factor = self._reduced2physical_factor[index_lens]
         return alpha_reduced * factor
 
-    def _gravitational_delay(self, x, y, kwargs_lens, idex, z_lens):
+    def _gravitational_delay(self, x, y, kwargs_lens, index, z_lens):
         """
 
         :param x: co-moving coordinate at the lens plane
         :param y: co-moving coordinate at the lens plane
         :param kwargs_lens: lens model keyword arguments
         :param z_lens: redshift of the deflector
-        :param idex: index of the lens model
+        :param index: index of the lens model in sorted redshfit convention
         :return: gravitational delay in units of days as seen at z=0
         """
-        theta_x, theta_y = self._co_moving2angle(x, y, idex)
-        potential = self._lens_model.potential(theta_x, theta_y, kwargs_lens, k=self._sorted_redshift_index[idex])
+        theta_x, theta_y = self._co_moving2angle(x, y, index)
+        k = self._sorted_redshift_index[index]
+        potential = self.func_list[k].function(theta_x, theta_y, **kwargs_lens[k])
         delay_days = self._lensing_potential2time_delay(potential, z_lens, z_source=self._z_source_convention)
         return -delay_days
 
@@ -394,12 +398,13 @@ class MultiPlaneBase(object):
         :param alpha_x: physical angle (radian) before the deflector plane
         :param alpha_y: physical angle (radian) before the deflector plane
         :param kwargs_lens: lens model parameter kwargs
-        :param index: index of the lens model to be added
+        :param index: index of the lens model to be added in sorted redshift list convention
         :param idex_lens: redshift of the deflector plane
         :return: updated physical deflection after deflector plane (in a backwards ray-tracing perspective)
         """
         theta_x, theta_y = self._co_moving2angle(x, y, index)
-        alpha_x_red, alpha_y_red = self._lens_model.alpha(theta_x, theta_y, kwargs_lens, k=self._sorted_redshift_index[index])
+        k = self._sorted_redshift_index[index]
+        alpha_x_red, alpha_y_red = self.func_list[k].derivatives(theta_x, theta_y, **kwargs_lens[k])
         alpha_x_phys = self._reduced2physical_deflection(alpha_x_red, index)
         alpha_y_phys = self._reduced2physical_deflection(alpha_y_red, index)
         return alpha_x - alpha_x_phys, alpha_y - alpha_y_phys

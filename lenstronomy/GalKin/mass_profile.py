@@ -7,7 +7,7 @@ from lenstronomy.GalKin.cosmo import Cosmo
 
 class MassProfile(object):
     """
-    mass profile class
+    mass profile class, only works if all the profiles are at one single lens plane
     """
     def __init__(self, profile_list, kwargs_cosmo={'D_d': 1000, 'D_s': 2000, 'D_ds': 500}, interpol_grid_num=1000,
                  max_interpolate=100, min_interpolate=0.001):
@@ -40,6 +40,7 @@ class MassProfile(object):
 
     def mass_3d(self, r, kwargs):
         """
+        mass enclosed a 3d radius
 
         :param r: in arc seconds
         :param kwargs: lens model parameters in arc seconds
@@ -49,4 +50,3 @@ class MassProfile(object):
         mass_dim = mass_dimless * const.arcsec ** 2 * self.cosmo.D_d * self.cosmo.D_s \
                        / self.cosmo.D_ds * const.Mpc * const.c ** 2 / (4 * np.pi * const.G)
         return mass_dim
-    # * const.arcsec * self.cosmo.D_d

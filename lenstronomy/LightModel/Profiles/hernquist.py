@@ -18,9 +18,8 @@ class Hernquist(object):
 
         :param x:
         :param y:
-        :param sigma0:
-        :param a:
-        :param s:
+        :param amp:
+        :param Rs: scale radius: half-light radius = Rs / 0.551
         :param center_x:
         :param center_y:
         :return:
@@ -67,6 +66,8 @@ class HernquistEllipse(object):
         :param center_y:
         :return:
         """
+        #TODO check ellipticity consistency with the mass profile kappa definition
+        #x_, y_ = param_util.transform_e1e2(x, y, e1, e2, center_x, center_y)
         phi_G, q = param_util.ellipticity2phi_q(e1, e2)
         x_ , y_ = self._coord_transf(x, y, q, phi_G, center_x, center_y)
         return self.spherical.function(x_, y_, amp, Rs)

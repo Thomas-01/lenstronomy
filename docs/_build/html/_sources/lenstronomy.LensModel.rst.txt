@@ -6,12 +6,21 @@ Subpackages
 
 .. toctree::
 
+    lenstronomy.LensModel.LightConeSim
     lenstronomy.LensModel.Optimizer
     lenstronomy.LensModel.Profiles
     lenstronomy.LensModel.Solver
 
 Submodules
 ----------
+
+lenstronomy.LensModel.convergence\_integrals module
+---------------------------------------------------
+
+.. automodule:: lenstronomy.LensModel.convergence_integrals
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 lenstronomy.LensModel.lens\_model module
 ----------------------------------------
@@ -45,18 +54,26 @@ lenstronomy.LensModel.multi\_plane module
     :undoc-members:
     :show-inheritance:
 
-lenstronomy.LensModel.numeric\_lens\_differentials module
----------------------------------------------------------
+lenstronomy.LensModel.multi\_plane\_base module
+-----------------------------------------------
 
-.. automodule:: lenstronomy.LensModel.numeric_lens_differentials
+.. automodule:: lenstronomy.LensModel.multi_plane_base
     :members:
     :undoc-members:
     :show-inheritance:
 
-lenstronomy.LensModel.numerical\_profile\_integrals module
-----------------------------------------------------------
+lenstronomy.LensModel.profile\_integrals module
+-----------------------------------------------
 
-.. automodule:: lenstronomy.LensModel.numerical_profile_integrals
+.. automodule:: lenstronomy.LensModel.profile_integrals
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+lenstronomy.LensModel.profile\_list\_base module
+------------------------------------------------
+
+.. automodule:: lenstronomy.LensModel.profile_list_base
     :members:
     :undoc-members:
     :show-inheritance:

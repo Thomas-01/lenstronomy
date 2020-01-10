@@ -3,9 +3,10 @@ __author__ = 'sibirrer'
 
 import numpy as np
 import scipy.special as special
+from lenstronomy.LensModel.Profiles.base_profile import LensProfileBase
 
 
-class SPP(object):
+class SPP(LensProfileBase):
     """
     class for circular power-law mass distribution
     """
@@ -19,7 +20,7 @@ class SPP(object):
         :type x: array of size (n)
         :param theta_E: Einstein radius of lense
         :type theta_E: float.
-        :param gamma: power law slope of mass profifle
+        :param gamma: power law slope of mass profile
         :type gamma: <2 float
         :param q: Axis ratio
         :type q: 0<q<1
@@ -42,29 +43,16 @@ class SPP(object):
 
     def derivatives(self, x, y, theta_E, gamma, center_x=0., center_y=0.):
 
-        # # @hope.jit
-        # def xy_prime(dx, dy, eta, a, E, xt1, xt2, q):
-        #     fac = 1./eta*(a/(E*E))**(eta/2-1)*2
-        #     dx[:] = fac*xt1
-        #     dy[:] = fac*xt2/(q*q)
         gamma = self._gamma_limit(gamma)
 
         xt1 = x - center_x
         xt2 = y - center_y
-        E = theta_E / ((3. - gamma) / 2.) ** (1. / (1. - gamma))
-        # E = phi_E_spp
-        eta = -gamma + 3.
 
-        P2=xt1*xt1+xt2*xt2
-        if isinstance(P2, int) or isinstance(P2, float):
-            a = max(0.000001,P2)
-        else:
-            a=np.empty_like(P2)
-            p2 = P2[P2 > 0]  #in the SIS regime
-            a[P2==0] = 0.000001
-            a[P2>0] = p2
-
-        fac = 1./eta*(a/(E*E))**(eta/2-1)*2
+        r2 = xt1*xt1+xt2*xt2
+        a = np.maximum(r2, 0.000001)
+        r = np.sqrt(a)
+        alpha = theta_E * (r2/theta_E**2) ** (1 - gamma/2.)
+        fac = alpha/r
         f_x = fac*xt1
         f_y = fac*xt2
         return f_x, f_y
@@ -95,7 +83,8 @@ class SPP(object):
         f_xy = gamma2
         return f_xx, f_yy, f_xy
 
-    def rho2theta(self, rho0, gamma):
+    @staticmethod
+    def rho2theta(rho0, gamma):
         """
         converts 3d density into 2d projected density parameter
         :param rho0:
@@ -108,7 +97,8 @@ class SPP(object):
         theta_E = fac**(1. / (gamma - 1))
         return theta_E
 
-    def theta2rho(self, theta_E, gamma):
+    @staticmethod
+    def theta2rho(theta_E, gamma):
         """
         converts projected density parameter (in units of deflection) into 3d density parameter
         :param theta_E:
@@ -120,7 +110,8 @@ class SPP(object):
         rho0 = fac2 / fac1
         return rho0
 
-    def mass_3d(self, r, rho0, gamma):
+    @staticmethod
+    def mass_3d(r, rho0, gamma):
         """
         mass enclosed a 3d sphere or radius r
         :param r:
@@ -185,7 +176,8 @@ class SPP(object):
         pot = mass_3d/r
         return pot
 
-    def density(self, r, rho0, gamma):
+    @staticmethod
+    def density(r, rho0, gamma):
         """
         computes the density
         :param x:
@@ -198,7 +190,8 @@ class SPP(object):
         rho = rho0 / r**gamma
         return rho
 
-    def density_2d(self, x, y, rho0, gamma, center_x=0, center_y=0):
+    @staticmethod
+    def density_2d(x, y, rho0, gamma, center_x=0, center_y=0):
         """
         projected density
         :param x:
@@ -216,15 +209,12 @@ class SPP(object):
         sigma = np.sqrt(np.pi) * special.gamma(1./2*(-1+gamma))/special.gamma(gamma/2.) * r**(1-gamma) * rho0
         return sigma
 
-    def _gamma_limit(self, gamma):
+    @staticmethod
+    def _gamma_limit(gamma):
         """
         limits the power-law slope to certain bounds
 
         :param gamma: power-law slope
         :return: bounded power-law slopte
         """
-        if gamma < 1.5:
-            gamma = 1.5
-        if gamma > 2.9:
-            gamma = 2.9
         return gamma

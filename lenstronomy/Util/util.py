@@ -41,6 +41,7 @@ def approx_theta_E(ximg,yimg):
 
     return 0.5*(dr_greatest*dr_second)**0.5
 
+
 def sort_image_index(ximg,yimg,xref,yref):
 
     """
@@ -93,7 +94,7 @@ def map_coord2pix(ra, dec, x_0, y_0, M):
     :param x_0: pixel value in x-axis of ra,dec = 0,0
     :param y_0: pixel value in y-axis of ra,dec = 0,0
     :param M: 2x2 matrix to transform angular to pixel coordinates
-    :return: transformed coordnate systems of input ra and dec
+    :return: transformed coordinate systems of input ra and dec
     """
     x, y = M.dot(np.array([ra, dec]))
     return x + x_0, y + y_0
@@ -165,13 +166,15 @@ def make_grid_transformed(numPix, Mpix2Angle):
     return ra_grid, dec_grid
 
 
-def make_grid_with_coordtransform(numPix, deltapix, subgrid_res=1, left_lower=False, inverse=True):
+def make_grid_with_coordtransform(numPix, deltapix, subgrid_res=1, center_ra=0, center_dec=0, left_lower=False, inverse=True):
     """
-    same as make_grid routine, but returns the transformaton matrix and shift between coordinates and pixel
+    same as make_grid routine, but returns the transformation matrix and shift between coordinates and pixel
 
-    :param numPix:
-    :param deltapix:
-    :param subgrid_res:
+    :param numPix: number of pixels per axis
+    :param deltapix: pixel scale per axis
+    :param subgrid_res: supersampling resolution relative to the stated pixel size
+    :param center_ra: center of the grid
+    :param center_dec: center of the grid
     :param left_lower: sets the zero point at the lower left corner of the pixels
     :param inverse: bool, if true sets East as left, otherwise East is righrt
     :return:
@@ -185,21 +188,21 @@ def make_grid_with_coordtransform(numPix, deltapix, subgrid_res=1, left_lower=Fa
     else:
         delta_x = deltapix_eff
     if left_lower is True:
-        x_grid = matrix[:, 0]*deltapix
-        y_grid = matrix[:, 1]*deltapix
+        ra_grid = matrix[:, 0] * delta_x
+        dec_grid = matrix[:, 1] * deltapix_eff
     else:
-        x_grid = (matrix[:, 0] - (numPix_eff-1)/2.)*delta_x
-        y_grid = (matrix[:, 1] - (numPix_eff-1)/2.)*deltapix_eff
+        ra_grid = (matrix[:, 0] - (numPix_eff-1)/2.) * delta_x
+        dec_grid = (matrix[:, 1] - (numPix_eff-1)/2.) * deltapix_eff
     shift = (subgrid_res-1)/(2.*subgrid_res)*deltapix
-    x_grid -= shift
-    y_grid -= shift
-    ra_at_xy_0 = x_grid[0]
-    dec_at_xy_0 = y_grid[0]
-    x_at_radec_0 = (numPix_eff - 1) / 2.
-    y_at_radec_0 = (numPix_eff - 1) / 2.
+    ra_grid -= shift + center_ra
+    dec_grid -= shift + center_dec
+    ra_at_xy_0 = ra_grid[0]
+    dec_at_xy_0 = dec_grid[0]
+
     Mpix2coord = np.array([[delta_x, 0], [0, deltapix_eff]])
     Mcoord2pix = np.linalg.inv(Mpix2coord)
-    return x_grid, y_grid, ra_at_xy_0, dec_at_xy_0, x_at_radec_0, y_at_radec_0, Mpix2coord, Mcoord2pix
+    x_at_radec_0, y_at_radec_0 = map_coord2pix(-ra_at_xy_0, -dec_at_xy_0, x_0=0, y_0=0, M=Mcoord2pix)
+    return ra_grid, dec_grid, ra_at_xy_0, dec_at_xy_0, x_at_radec_0, y_at_radec_0, Mpix2coord, Mcoord2pix
 
 
 def grid_from_coordinate_transform(nx, ny, Mpix2coord, ra_at_xy_0, dec_at_xy_0):
@@ -353,14 +356,37 @@ def selectBest(array, criteria, numSelect, highest=True):
     return result[::-1]
 
 
-def points_on_circle(radius, points):
+def select_best(array, criteria, num_select, highest=True):
+    """
+
+    :param array: numpy array to be selected from
+    :param criteria: criteria of selection
+    :param highest: bool, if false the lowest will be selected
+    :param num_select: number of elements to be selected
+    :return:
+    """
+    n = len(array)
+    m = len(criteria)
+    if n != m:
+        raise ValueError('Elements in array (%s) not equal to elements in criteria (%s)' % (n, m))
+    if n < num_select:
+        return array
+    array = np.array(array)
+    if highest is True:
+        indexes = criteria.argsort()[::-1][:num_select]
+    else:
+        indexes = criteria.argsort()[::-1][n-num_select:]
+    return array[indexes]
+
+
+def points_on_circle(radius, num_points):
     """
     returns a set of uniform points around a circle
     :param radius: radius of the circle
-    :param points: number of points on the circle
+    :param num_points: number of points on the circle
     :return:
     """
-    angle = np.linspace(0, 2*np.pi, points)
+    angle = np.linspace(0, 2 * np.pi, num_points)
     x_coord = np.cos(angle)*radius
     y_coord = np.sin(angle)*radius
     return x_coord, y_coord
@@ -477,3 +503,41 @@ def make_subgrid(ra_coord, dec_coord, subgrid_res=2):
     dec_coords_sub = image2array(dec_array_new)
     return ra_coords_sub, dec_coords_sub
 
+
+def convert_bool_list(n, k=None):
+    """
+    returns a bool list of the length of the lens models
+    if k = None: returns bool list with True's
+    if k is int, returns bool list with False's but k'th is True
+    if k is a list of int, e.g. [0, 3, 5], returns a bool list with True's in the integers listed and False elsewhere
+    if k is a boolean list, checks for size to match the numbers of models and returns it
+
+    :param n: integer, total lenght of output boolean list
+    :param k: None, int, or list of ints
+    :return: bool list
+    """
+    if k is None:
+        bool_list = [True] * n
+    elif isinstance(k, (int, np.integer)):  # single integer
+        bool_list = [False] * n
+        bool_list[k] = True
+    elif len(k) == 0:  # empty list
+        bool_list = [False] * n
+    elif isinstance(k[0], bool):
+        if n != len(k):
+            raise ValueError('length of selected lens models in format of boolean list is %s '
+                             'and does not match the models of this class instance %s.' % (len(k), n))
+        bool_list = k
+    elif isinstance(k[0], (int, np.integer)):  # list of integers
+        bool_list = [False] * n
+        for i, k_i in enumerate(k):
+            if k_i is not False:
+                #if k_i is True:
+                #    bool_list[i] = True
+                if k_i < n:
+                    bool_list[k_i] = True
+                else:
+                    raise ValueError("k as set by %s is not convertable in a bool string!" % k)
+    else:
+        raise ValueError('input list k as %s not compatible' % k)
+    return bool_list
