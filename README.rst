@@ -2,6 +2,8 @@
 lenstronomy - gravitational lensing software package
 ========================================================
 
+.. image:: docs/figures/readme_fig.png
+
 .. image:: https://badge.fury.io/py/lenstronomy.png
     :target: http://badge.fury.io/py/lenstronomy
 
@@ -92,7 +94,8 @@ We have made an extension module available at `https://github.com/sibirrer/lenst
 You can find simple examle notebooks for various cases. The latest versions of the notebooks should be compatible with the recent pip version of lenstronomy.
 
 * `Units, coordiante system and parameter definitions in lenstronomy <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/units_coordinates_parameters.ipynb>`_
-* `FITS handling and extracting needed information from the data prior to modeling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/units_coordinates_parameters.ipynb>`_
+* `FITS handling and extracting needed information from the data prior to modeling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/fits_handling.ipynb>`_
+* `Modeling a simple Einstein ring <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/simple_ring.ipynb>`_
 * `Quadrupoly lensed quasar modelling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/quad_model.ipynb>`_
 * `Double lensed quasar modelling <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/double_model.ipynb>`_
 * `Time-delay cosmography <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/time-delay%20cosmography.ipynb>`_
@@ -106,6 +109,20 @@ You can find simple examle notebooks for various cases. The latest versions of t
 * `Mock simulation API with multi color models <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/simulation_api.ipynb>`_
 * `Catalogue data modeling of image positions, flux ratios and time delays <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/catalogue%20modelling.ipynb>`_
 * `Example of numerical ray-tracing and convolution options <https://github.com/sibirrer/lenstronomy_extensions/blob/master/lenstronomy_extensions/Notebooks/lenstronomy_numerics.ipynb>`_
+
+
+
+Contribution
+------------
+Check out the contributing page `contributing page <https://lenstronomy.readthedocs.io/en/latest/contributing.html>`_
+and become an author of lenstronomy! A big shutout to the current `list of contributors and developers <https://lenstronomy.readthedocs.io/en/latest/authors.html>`_!
+
+
+
+Affiliated packages
+-------------------
+Multiple affiliated packages that make use of lenstronomy can be found `here <https://lenstronomy.readthedocs.io/en/latest/affiliatedpackages.html>`_
+(not complete) and further packages are under development by the community.
 
 
 Mailing list
@@ -134,8 +151,8 @@ We provide some examples where a real galaxy has been lensed and then been recon
 
 Attribution
 -----------
-The design concept of ``lenstronomy`` are reported in
-`Birrer & Amara 2018 <https://arxiv.org/abs/1803.09746v1>`_. Please cite this paper whenever you publish
-results that made use of ``lenstronomy``. Please also cite `Birrer et al 2015 <http://adsabs.harvard.edu/abs/2015ApJ...813..102B>`_
+The design concept of ``lenstronomy`` are reported in `Birrer & Amara 2018 <https://arxiv.org/abs/1803.09746v1>`_.
+Please cite this paper when you use lenstronomy in a publication and link to `https://github.com/sibirrer/lenstronomy <https://github.com/sibirrer/lenstronomy>`_.
+Please also cite `Birrer et al 2015 <http://adsabs.harvard.edu/abs/2015ApJ...813..102B>`_
 when you make use of the ``lenstronomy`` work-flow or the Shapelet source reconstruction. Please make sure to cite also
 the relevant work that was implemented in ``lenstronomy``, as described in the release paper.

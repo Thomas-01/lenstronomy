@@ -53,8 +53,6 @@ class FittingSequence(object):
         :return: fitting results
         """
         chain_list = []
-        #param_list = []
-        #samples_mcmc, param_mcmc, dist_mcmc = [], [], []
         for i, fitting in enumerate(fitting_list):
             fitting_type = fitting[0]
             kwargs = fitting[1]
@@ -64,6 +62,9 @@ class FittingSequence(object):
 
             elif fitting_type == 'update_settings':
                 self.update_settings(**kwargs)
+
+            elif fitting_type == 'set_param_value':
+                self.set_param_value(**kwargs)
 
             elif fitting_type == 'fix_not_computed':
                 self.fix_not_computed(**kwargs)
@@ -78,6 +79,11 @@ class FittingSequence(object):
                 kwargs_result, chain, param = self.pso(**kwargs)
                 self._updateManager.update_param_state(**kwargs_result)
                 chain_list.append([fitting_type, chain, param])
+
+            elif fitting_type == 'SIMPLEX':
+                kwargs_result = self.simplex(**kwargs)
+                self._updateManager.update_param_state(**kwargs_result)
+                chain_list.append([fitting_type, kwargs_result])
 
             elif fitting_type == 'MCMC':
                 if not 'init_samples' in kwargs:
@@ -94,7 +100,7 @@ class FittingSequence(object):
                 chain_list.append(ns_output)
 
             else:
-                raise ValueError("fitting_sequence %s is not supported. Please use: 'PSO', 'MCMC', 'psf_iteration', "
+                raise ValueError("fitting_sequence %s is not supported. Please use: 'PSO', 'SIMPLEX', 'MCMC', 'psf_iteration', "
                                  "'restart', 'update_settings' or ""'align_images'" % fitting_type)
         return chain_list
 
@@ -161,8 +167,26 @@ class FittingSequence(object):
         likelihoodModule = LikelihoodModule(self.kwargs_data_joint, kwargs_model, self.param_class, **kwargs_likelihood)
         return likelihoodModule
 
+    def simplex(self, n_iterations, method='Nelder-Mead'):
+        """
+        Downhill simplex optimization using the Nelder-Mead algorithm.
+
+        :param n_iterations: maximum number of iterations to perform
+        :param method: the optimization method used, see documentation in scipy.optimize.minimize
+        :return: result of the best fit
+        """
+
+        param_class = self.param_class
+        kwargs_temp = self._updateManager.parameter_state
+        init_pos = param_class.kwargs2args(**kwargs_temp)
+        sampler = Sampler(likelihoodModule=self.likelihoodModule)
+        result = sampler.simplex(init_pos, n_iterations, method)
+
+        kwargs_result = param_class.args2kwargs(result, bijective=True)
+        return kwargs_result
+
     def mcmc(self, n_burn, n_run, walkerRatio, sigma_scale=1, threadCount=1, init_samples=None, re_use_samples=True,
-             sampler_type='EMCEE'):
+             sampler_type='EMCEE', progress=True):
         """
         MCMC routine
 
@@ -174,6 +198,7 @@ class FittingSequence(object):
         :param init_samples: initial sample from where to start the MCMC process
         :param re_use_samples: bool, if True, re-uses the samples described in init_samples.nOtherwise starts from scratch.
         :param sampler_type: string, which MCMC sampler to be used. Options are: 'COSMOHAMMER, and 'EMCEE'
+        :param progress: boolean, if True shows progress bar in EMCEE
         :return: list of output arguments, e.g. MCMC samples, parameter names, logL distances of all samples specified by the specific sampler used
         """
 
@@ -200,7 +225,8 @@ class FittingSequence(object):
 
         if sampler_type is 'EMCEE':
             n_walkers = num_param * walkerRatio
-            samples, dist = mcmc_class.mcmc_emcee(n_walkers, n_run, n_burn, mean_start, sigma_start, mpi=self._mpi, threadCount=threadCount)
+            samples, dist = mcmc_class.mcmc_emcee(n_walkers, n_run, n_burn, mean_start, sigma_start, mpi=self._mpi,
+                                                  threadCount=threadCount, progress=progress)
             output = [sampler_type, samples, param_list, dist]
         else:
             raise ValueError('sampler_type %s not supported!' % sampler_type)
@@ -421,6 +447,22 @@ class FittingSequence(object):
                                          lens_light_remove_fixed, ps_remove_fixed, cosmo_remove_fixed)
         self._updateManager.update_limits(change_source_lower_limit, change_source_upper_limit)
         return 0
+
+    def set_param_value(self, **kwargs):
+        """
+        Set a parameter to a specific value. `kwargs` are below.
+        :param lens: [[i_model, ['param1', 'param2',...], [...]]
+        :type lens:
+        :param source: [[i_model, ['param1', 'param2',...], [...]]
+        :type source:
+        :param lens_light: [[i_model, ['param1', 'param2',...], [...]]
+        :type lens_light:
+        :param ps: [[i_model, ['param1', 'param2',...], [...]]
+        :type ps:
+        :return: 0, the value of the param is overwritten
+        :rtype:
+        """
+        self._updateManager.update_param_value(**kwargs)
 
     def fix_not_computed(self, free_bands):
         """

@@ -81,11 +81,13 @@ class ImageLinearFit(ImageModel):
         """
         computes the linear response matrix (m x n), with n beeing the data size and m being the coefficients
 
-        :param kwargs_lens:
-        :param kwargs_source:
-        :param kwargs_lens_light:
-        :param kwargs_ps:
-        :return:
+        :param kwargs_lens: lens model keyword argument list
+        :param kwargs_source: extended source model keyword argument list
+        :param kwargs_lens_light: lens light model keyword argument list
+        :param kwargs_ps: point source model keyword argument list
+        :param kwargs_extinction: extinction model keyword argument list
+        :param kwargs_special: special keyword argument list
+        :return: linear response matrix
         """
         A = self._linear_response_matrix(kwargs_lens, kwargs_source, kwargs_lens_light, kwargs_ps, kwargs_extinction, kwargs_special)
         return A
@@ -241,11 +243,13 @@ class ImageLinearFit(ImageModel):
     def reduced_residuals(self, model, error_map=0):
         """
 
-        :param model:
-        :return:
+        :param model: 2d numpy array of the modeled image
+        :param error_map: 2d numpy array of additional noise/error terms from model components (such as PSF model uncertainties)
+        :return: 2d numpy array of reduced residuals per pixel
         """
         mask = self.likelihood_mask
-        residual = (model - self.Data.data)/np.sqrt(self.Data.C_D+np.abs(error_map))*mask
+        C_D = self.Data.C_D_model(model)
+        residual = (model - self.Data.data)/np.sqrt(C_D+np.abs(error_map))*mask
         return residual
 
     def reduced_chi2(self, model, error_map=0):
@@ -307,10 +311,12 @@ class ImageLinearFit(ImageModel):
         if self._psf_error_map is True:
             for k, bool in enumerate(self._psf_error_map_bool_list):
                 if bool is True:
-                    ra_pos, dec_pos, amp = self.PointSource.point_source_list(kwargs_ps, kwargs_lens=kwargs_lens, k=k)
+                    ra_pos, dec_pos, _ = self.PointSource.point_source_list(kwargs_ps, kwargs_lens=kwargs_lens, k=k,
+                                                                            with_amp=False)
                     if len(ra_pos) > 0:
                         ra_pos, dec_pos = self._displace_astrometry(ra_pos, dec_pos, kwargs_special=kwargs_special)
-                        error_map += self.ImageNumerics.psf_error_map(ra_pos, dec_pos, amp, self.Data.data)
+                        error_map += self.ImageNumerics.psf_error_map(ra_pos, dec_pos, None, self.Data.data,
+                                                                      fix_psf_error_map=False)
         return error_map
 
     def error_map_source(self, kwargs_source, x_grid, y_grid, cov_param):

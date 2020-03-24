@@ -14,9 +14,6 @@ class LightModelBase(object):
         """
 
         :param light_model_list: list of light models
-        :param deflection_scaling_list: list of floats, rescales the original reduced deflection angles from the lens model
-        to enable different models to be placed at different optical (redshift) distances. None means they are all
-        :param source_redshift_list: list of redshifts of the model components
         :param smoothing: smoothing factor for certain models (deprecated)
         """
         self.profile_type_list = light_model_list
@@ -162,6 +159,12 @@ class LightModelBase(object):
                     # 'GAUSSIAN', 'GAUSSIAN_ELLIPSE', 'POWER_LAW', 'NIE', 'CHAMELEON', 'DOUBLE_CHAMELEON' ,
                 # 'TRIPLE_CHAMELEON', 'UNIFORM'
         return norm_flux_list
+
+    def delete_interpol_caches(self):
+        """Call the delete_cache method of INTERPOL profiles"""
+        for i, model in enumerate(self.profile_type_list):
+            if model == 'INTERPOL':
+                self.func_list[i].delete_cache()
 
     def _transform_kwargs(self, kwargs_list):
         """

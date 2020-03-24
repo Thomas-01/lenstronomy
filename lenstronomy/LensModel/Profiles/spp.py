@@ -18,14 +18,10 @@ class SPP(LensProfileBase):
         """
         :param x: set of x-coordinates
         :type x: array of size (n)
-        :param theta_E: Einstein radius of lense
+        :param theta_E: Einstein radius of lens
         :type theta_E: float.
         :param gamma: power law slope of mass profile
         :type gamma: <2 float
-        :param q: Axis ratio
-        :type q: 0<q<1
-        :param phi_G: position angel of SES
-        :type q: 0<phi_G<pi/2
         :returns:  function
         :raises: AttributeError, KeyError
         """
@@ -149,10 +145,10 @@ class SPP(LensProfileBase):
     def mass_2d_lens(self, r, theta_E, gamma):
         """
 
-        :param r:
-        :param theta_E:
-        :param gamma:
-        :return:
+        :param r: projected radius
+        :param theta_E: Einstein radius
+        :param gamma: power-law slope
+        :return: 2d projected radius enclosed
         """
         rho0 = self.theta2rho(theta_E, gamma)
         return self.mass_2d(r, rho0, gamma)
@@ -189,6 +185,15 @@ class SPP(LensProfileBase):
         """
         rho = rho0 / r**gamma
         return rho
+
+    def density_lens(self, r, theta_E, gamma):
+        """
+        computes the density at 3d radius r given lens model parameterization.
+        The integral in projected in units of angles (i.e. arc seconds) results in the convergence quantity.
+
+        """
+        rho0 = self.theta2rho(theta_E, gamma)
+        return self.density(r, rho0, gamma)
 
     @staticmethod
     def density_2d(x, y, rho0, gamma, center_x=0, center_y=0):
